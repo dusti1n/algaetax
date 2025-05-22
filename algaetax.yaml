@@ -1,0 +1,12 @@
+# algaetax; algaetax.yaml
+name: algaetax
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - biopython
+  - pyyaml
+  - openpyxl
+  - pandas
+  - requests
