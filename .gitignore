@@ -1,4 +1,4 @@
 .DS_Store
-__pycache__
+library/__pycache__
 results_algaetax/**
 input_data/**

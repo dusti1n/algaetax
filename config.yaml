@@ -1,23 +1,25 @@
-# algaetax; Config File
+# algaetax; configuration file: config.yaml
+
 # General settings
 general:
-  input_data: "input_data/example_file.xlsx" # Path to input Excel file (e.g. input_data/example_file.xlsx)
-  output_dir: "results_algaetax" # Folder to save results (e.g. results_algaetax/)
-  taxa_column_letter: "D" # Excel column with taxonomy names (e.g. A, B, C, D)
-  header_row: 0 # 0 = first row has headers, None = no header row
-  backup_file: true # Create backup of input file (true/false)
-  export_not_found_taxa_list: true # Export list of taxa where ALL used databases returned "Not found" (file: taxa_not_found.csv)
+  input_data: "input_data/algaetax_test" # Path to input Excel file (e.g. input_data/example_file.xlsx)
+  output_dir: "results_algaetax" # Folder to save results (default: results_algaetax/)
+  taxa_column_number: 1 # 1-based index: 1 = column A, 27 = column AA
+  header_row: 1 # Excel header row (1 = first row); set to false if the file has no header
+  backup_config: true # # Copy the config.yaml file to the output directory for reference (default=true)
+  backup_input: true # Backup of the input Excel file before processing (true/false)
+  export_not_found_taxa_list: true # Export list of taxa where ALL used databases returned "Not found" (default=true)
 
 # Taxa filter settings
 filter:
-  # Terms to ignore in species names (e.g. generic or uncertain labels)
-  blacklist: ["sp", "sp.", "spec", "spec.", "cf", "cf.", "nr", "nr.", "gran", sonst", "sonst.", "Komplex", "komplex", "complex", "unb"]
+  blacklist_file: blacklist.txt # Path to text file with terms to ignore in species names
+  backup_blacklist: true # Create a backup of the blacklist in {output_dir}/backups (default=true)
 
 # Databases to use
 database:
-  NCBI: false # Enable NCBI (e.g. true or false)
-  PR2: false # Enable local PR2 (e.g. true)
-  ALGB: false # Enable AlgaeBase (e.g. false if no key)
+  NCBI: true # Use NCBI Database
+  PR2: true # Use local PR2 Database
+  ALGB: true # Use AlgaeBase Database (requires API key!)
 
 # Paths to local database files
 database_path:
@@ -25,8 +27,8 @@ database_path:
 
 # NCBI API settings
 db_ncbi:
-  ncbi_email: "anonymous@ncbi.com" # Email for NCBI queries (default: anonymous@ncbi.com, e.g. you@example.com)
   api_key: "" # Optional key to speed up requests (e.g. abc123xyz)
+  ncbi_email: "anonymous@ncbi.com" # Email for NCBI queries (default: anonymous@ncbi.com, e.g. name@example.com)
 
 # AlgaeBase API settings
 db_algaebase:

@@ -1,12 +1,13 @@
-# algaetax; algaetax.yaml
+# Conda_ENV; algaetax
 name: algaetax
 channels:
   - conda-forge
   - bioconda
 dependencies:
+# algaetax_dependent_packages
   - python=3.11
-  - biopython
-  - pyyaml
-  - openpyxl
-  - pandas
-  - requests
+  - biopython=1.85
+  - pyyaml=6.0.2
+  - openpyxl=3.1.5
+  - pandas=2.2.3
+  - requests=2.32.4
