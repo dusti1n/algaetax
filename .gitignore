@@ -1,4 +1,9 @@
+# macOS metadata
 .DS_Store
-library/__pycache__
+# Python cache
+library/__pycache__/
+# Analysis results
 results_algaetax/**
+# Input data (keep folder)
 input_data/**
+!input_data/.gitkeep

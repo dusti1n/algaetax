@@ -87,7 +87,6 @@ def get_taxon_ids_parallel(taxa_list):
             taxon, tax_id = future.result()
             taxon_ids[taxon] = tax_id
             print(f"[{i}/{len(taxa_list)}] NCBI: {taxon}")
-
     return taxon_ids
 
 
@@ -125,7 +124,6 @@ def batch_query_ncbi(taxon_ids, batch_size=10):
 
         except Exception as e:
             print(f"Error with batch {batch_ids}: {e}")
-
     return results
 
 
@@ -176,7 +174,6 @@ def query_algaebase(taxon):
         data = response.json()
         if data.get("result"):
             entry = data["result"][0]
-
             result["ALGB_Status"] = "Found"
             result["ALGB_ID"] = str(entry.get("dwc:scientificNameID", ""))
             result["ALGB_Empire"] = str(entry.get("dwc:empire", ""))
@@ -188,7 +185,6 @@ def query_algaebase(taxon):
             result["ALGB_Family"] = str(entry.get("dwc:family", ""))
             result["ALGB_Genus"] = str(entry.get("dwc:genus", ""))
             result["ALGB_scientificName"] = str(entry.get("dwc:scientificName", ""))
-
             lineage_parts = []
             for rank in [
                 "dwc:empire", "dwc:kingdom", "dwc:phylum", "dwc:subphylum", 
@@ -201,5 +197,4 @@ def query_algaebase(taxon):
 
     except Exception as e:
         return result
-
     return result

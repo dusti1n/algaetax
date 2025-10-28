@@ -8,9 +8,6 @@ import pandas as pd
 from collections import Counter
 from pathlib import Path
 
-# Import metadata from library.metadata
-from library.metadata import NAME, VERSION, SUPPORTED_DATABASES
-
 # Import functions from library.utils
 from library.utils import (
     load_config,
@@ -18,7 +15,8 @@ from library.utils import (
     load_taxa_from_excel,
     is_database_enabled,
     extract_valid_taxon,
-    safe_save_path
+    safe_save_path,
+    get_config_path
 )
 
 # Import functions from library.queries
@@ -47,24 +45,40 @@ output_file = safe_save_path(output_file)
 # Start runtime timer
 start_time = time.time()
 
-# Backup config.yaml if enabled
+
+# Backup config if enabled
 if config["general"].get("backup_config", False):
-    config_source_path = Path("config.yaml")
+    cfg_path = get_config_path()
+
+    # Case 1: Config path not found or invalid
+    if not cfg_path or not os.path.exists(cfg_path):
+        print(f"[ERROR] Could not locate the loaded configuration file: {cfg_path}")
+        sys.exit(1)  # Stop execution
+
+    config_source_path = Path(cfg_path)
     backup_dir = OUTPUT_DIR / "backups"
-    config_target_path = backup_dir / "config.yaml"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    config_target_path = backup_dir / config_source_path.name
 
     try:
-        backup_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy(config_source_path, config_target_path)
+        # print(f"[algaetax] Backup created: {config_target_path}")
     except Exception as e:
-        print(f"[WARN] Could not copy config.yaml: {e}")
-
+        print(f"[ERROR] Could not back up configuration file: {e}")
+        sys.exit(1) # Stop if backup fails
+else:
+    pass
+    # print("[INFO] Config backup disabled in config.yaml")
 
 
 # FUNCTION: STARTUP_INFO
 # Print metadata and active database info
 def startup_info(config):
-    print(f"\n\n{NAME} {VERSION}\n")
+    # Start information
+    print("\nalgaetax v1.6.0 MIT License")
+    print("University of Duisburg-Essen (UDE)")
+    print("Dustin Finke, Prof. Dr. Bank Beszteri\n")
+    
     print("Metadata for Databases:")
     if is_database_enabled("NCBI", config):
         email = config["db_ncbi"].get("ncbi_email")
@@ -74,7 +88,7 @@ def startup_info(config):
 
     if is_database_enabled("PR2", config):
         path = config["database_path"].get("db_pr2", "[WARN] Not set in config")
-        print(f"\n[PR2_DB] Path: \n{path}")
+        # print(f"\n[PR2_DB] Path: \n{path}")
 
     if is_database_enabled("ALGB", config):
         api_key = config["db_algaebase"].get("api_key", "").strip()
@@ -98,7 +112,7 @@ def startup_info(config):
         else:
             # Case 2: API key is set: test if it works with a common genus
             try:
-                print("\n[algaetax] Checking AlgaeBase API key...")
+                print("[ALGB_DB] Checking AlgaeBase API key...")
                 test_params = {"genus": "[eq]Chlorella"}
                 r = requests.get(api_url.replace("/species", "/genus"),
                                 headers={"abapikey": api_key},
@@ -120,22 +134,19 @@ def startup_info(config):
                 print(f"\n\n[ERROR] Could not verify AlgaeBase API key: {e}")
                 sys.exit(1)
 
-    # List all active databases
+    # List all active databases (short format)
     print("\nEnabled Databases:")
     active = [db for db, enabled in config["database"].items() if enabled]
     if active:
-        for db in active:
-            name = SUPPORTED_DATABASES.get(db, "Unknown")
-            print(f"{db}: {name}")
+        print(", ".join(active))
     else:
         print("[WARN] No databases enabled. Check config.yaml.")
         sys.exit(1)
 
 
-
 # FUNCTION: QUERY_AND_SAVE
 # Run query workflow and write results
-def query_and_save(taxa_list, output_file, config):
+def query_and_save(taxa_list, id_list, id_column_name, output_file, config):
     pr2_data = load_pr2_db() if is_database_enabled("PR2", config) else None
     taxon_ids = get_taxon_ids_parallel(taxa_list) if is_database_enabled("NCBI", config) else {}
     ncbi_results = batch_query_ncbi(taxon_ids) if is_database_enabled("NCBI", config) else {}
@@ -151,8 +162,16 @@ def query_and_save(taxa_list, output_file, config):
     pr2_counter = 0
     algb_counter = 0
 
-    for taxon in taxa_list:
+    # Enumerate() allows us to access the index to match IDs to taxa
+    for i, taxon in enumerate(taxa_list):
         taxon_result = {}
+
+        # Add ID first if available
+        if id_list and len(id_list) > i and id_list[i] is not None:
+            taxon_result[id_column_name or "ID"] = id_list[i]  # Use actual header name
+
+        # Add taxon name next (keeps correct order)
+        taxon_result["Taxon"] = taxon
         
         # Fetch results for each active database
         if is_database_enabled("NCBI", config):
@@ -169,34 +188,56 @@ def query_and_save(taxa_list, output_file, config):
             algae_result = query_algaebase(taxon)
             taxon_result["ALGB"] = algae_result
 
-        results.append((taxon, taxon_result))
+        results.append(taxon_result)
+        # print(f"[DEBUG] Appended result type: {type(taxon_result)}")
+
+    # Count entries that contain the detected ID key (real column name)
+    id_key = id_column_name or "ID"
+    id_count = sum(1 for r in results if id_key in r)
+    # print(f"\n[DEBUG] Entries with IDs in results: {id_count}/{len(results)}")
 
     # Save results
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    write_results_to_csv(results, output_file, config)
+    write_results_to_csv(results, output_file, config, id_column_name)
 
     # Runtime summary
     elapsed = time.time() - start_time
     minutes = int(elapsed // 60)
     seconds = int(elapsed % 60)
     
-    print(f"\n\n{'-' * 20}")
-    print(f"[algaetax] All queries completed.")
+    print(f"{'-' * 20}")
+    print(f"[algaetax] All QUERIES completed.")
     print(f"Runtime: {minutes} min {seconds} sec; {elapsed:.2f} seconds")
     print(f"\n[algaetax] Results saved to: \n{output_file}\n\n")
 
 
 # FUNCTION: WRITE_RESULTS_TO_CSV
 # Format and write query results to CSV file
-def write_results_to_csv(results_list, output_file, config):
+def write_results_to_csv(results_list, output_file, config, id_column_name=None):
     rows = []
 
     ncbi_enabled = is_database_enabled("NCBI", config)
     pr2_enabled = is_database_enabled("PR2", config)
     algae_enabled = is_database_enabled("ALGB", config)
 
-    for taxon, result in results_list:
-        row = {"Taxon": taxon}
+    # Detect the correct ID column key (default "ID" if not found)
+    id_key = id_column_name or "ID"
+    id_present = any(id_key in res for res in results_list)
+    # print(f"[DEBUG] Writing results to CSV — IDs present: {id_present} (key='{id_key}')")
+
+    for result in results_list:
+        # Safety check: ensure result is a dictionary
+        if not isinstance(result, dict):
+            print(f"[WARN] Unexpected result type: {type(result)} — skipping this entry")
+            continue # Skip this one and continue
+        row = {}
+
+        # Add ID column dynamically if present
+        if id_key in result:
+            row[id_key] = result[id_key]
+
+        # Always add Taxon column next
+        row["Taxon"] = result.get("Taxon", "")
 
         # Process NCBI results
         if ncbi_enabled:
@@ -216,7 +257,7 @@ def write_results_to_csv(results_list, output_file, config):
                 # Build lineage string from PR2 fields
                 entry = pr2[0]
                 lineage_parts = []
-                for key in ["domain", "supergroup", "division", "subdivision", "class", "order", "family", "genus"]:
+                for key in ["domain", "supergroup", "division", "subdivision", "class", "order", "family", "genus", "species"]:
                     val = entry.get(key, "").strip()
                     if val:
                         lineage_parts.append(val)
@@ -229,6 +270,7 @@ def write_results_to_csv(results_list, output_file, config):
                 row["PR2_order"] = entry.get("order", "")
                 row["PR2_family"] = entry.get("family", "")
                 row["PR2_genus"] = entry.get("genus", "")
+                row["PR2_species"] = entry.get("species", "")
             else:
                 row["PR2_Status"] = "Not found"
 
@@ -257,13 +299,19 @@ def write_results_to_csv(results_list, output_file, config):
 
     df = pd.DataFrame(rows)
 
-    # Set column order based on enabled databases
-    columns = ["Taxon"]
+    # Start column order with ID (if present), then Taxon
+    columns = []
+    if id_column_name and id_column_name in df.columns:
+        columns.append(id_column_name)
+    elif "ID" in df.columns: # Fallback
+        columns.append("ID")
+    columns.append("Taxon")
+    
     if ncbi_enabled:
         columns += ["NCBI_Status", "NCBI_ID", "NCBI_Lineage"]
     if pr2_enabled:
         columns += ["PR2_Status", "PR2_domain", "PR2_supergroup", "PR2_division",
-                    "PR2_subdivision", "PR2_class", "PR2_order", "PR2_family", "PR2_genus", "PR2_Lineage"]
+                    "PR2_subdivision", "PR2_class", "PR2_order", "PR2_family", "PR2_genus", "PR2_species", "PR2_Lineage"]
     if algae_enabled:
         columns += ["ALGB_Status", "ALGB_Name_status", "ALGB_CurrentName", "ALGB_ID",
                     "ALGB_Empire", "ALGB_Kingdom", "ALGB_Phylum", "ALGB_Subphylum", "ALGB_Class",
@@ -302,12 +350,19 @@ if __name__ == "__main__":
     # Print metadata and check active databases
     startup_info(config)
     print(f"\n\n\n{'-' * 20}")
-    print("[algaetax] RUNNING QUERY...\n")
+    print("[algaetax] Run QUERY...\n")
 
     # Load taxa list from Excel file (raw data)
     input_file = config["general"]["input_data"]
     taxa_col_number = config["general"]["taxa_column_number"]
-    df, taxa_list = load_taxa_from_excel(input_file, taxa_col_number, output_file, config)
+
+    # Load taxa (and optionally IDs) from input Excel file
+    df, taxa_list, id_list, id_column_name = load_taxa_from_excel(input_file, taxa_col_number, output_file, config)
+
+
+    # If no IDs are defined in the config, create placeholder values
+    if not id_list:
+        id_list = [None] * len(taxa_list)
 
     # Clean and filter taxa based on blacklist
     valid_taxa = []
@@ -355,6 +410,5 @@ if __name__ == "__main__":
         print(f"\n[algaetax] Writing filtered taxa to file: \n{filepath}")
 
 
-
     # Query all enabled databases and save results
-    query_and_save(valid_taxa, output_file, config)
+    query_and_save(valid_taxa, id_list, id_column_name, output_file, config)
