@@ -4,6 +4,6 @@
 library/__pycache__/
 # Analysis results
 results_algaetax/**
-# Input data (keep folder)
-input_data/**
+# Ignore all contents of input_data, but keep the folder itself
+input_data/*
 !input_data/.gitkeep
