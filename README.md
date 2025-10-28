@@ -107,13 +107,13 @@ Before running **algaetax**, you should review and adjust the main parameters in
 
 | Parameter | Description | Example |
 |------------|--------------|----------|
-| `general.input_data` | Path to input Excel file | `input_data/dustin/input_list_trim_2.xlsx` |
-| `general.output_dir` | Output folder for results | `results_algaetax` |
-| `general.taxa_column_number` | Column number for taxa names (1-based) | `4` |
-| `general.header_row` | Header row number (`false` if none) | `1` |
-| `general.backup_config` | Save config copy to output | `true` |
-| `general.backup_input` | Backup input file before run | `true` |
-| `general.export_not_found_taxa_list` | Export list of unfound taxa | `true` |
+| `input_data` | Path to input Excel file | `input_data/dustin/input_list_trim_2.xlsx` |
+| `output_dir` | Output folder for results | `results_algaetax` |
+| `taxa_column_number` | Column number for taxa names (1-based) | `4` |
+| `header_row` | Header row number (`false` if none) | `1` |
+| `backup_config` | Save config copy to output | `true` |
+| `backup_input` | Backup input file before run | `true` |
+| `export_not_found_taxa_list` | Export list of unfound taxa | `true` |
 | `filter.blacklist_file` | Path to blacklist file | `blacklist.txt` |
 | `filter.backup_blacklist` | Backup blacklist to output | `true` |
 | `database.NCBI` | Use NCBI database | `true` |
