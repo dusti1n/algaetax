@@ -7,6 +7,7 @@ import pandas as pd
 import argparse
 
 
+
 # Cache for loaded configuration and its file path
 _CONFIG = None
 _CONFIG_PATH = None
@@ -14,6 +15,7 @@ _CONFIG_PATH = None
 # Return path of the loaded configuration file
 def get_config_path():
     return _CONFIG_PATH
+
 
 # Load YAML config file (only once, then cached)
 def load_config():
@@ -210,6 +212,39 @@ def load_blacklist(config):
 
     # Return cleaned list of terms, ignoring empty lines and comments
     return [line.strip().lower() for line in lines if line.strip() and not line.strip().startswith("#")]
+
+
+def load_skiplist(config):
+    """
+    Loads an optional skiplist file defined in config['filter']['skiplist_file'].
+    Taxa containing any of these terms will NOT be queried against external
+    databases but will still be included in the output file.
+    """
+    skip_file = config["filter"].get("skiplist_file")
+    if not skip_file:
+        return []  # Skiplist is optional
+
+    if not os.path.exists(skip_file):
+        raise FileNotFoundError(f"Skiplist file not found: {skip_file}")
+
+    # Optional backup (similar to blacklist)
+    if config["filter"].get("backup_skiplist", False):
+        output_dir = config["general"].get("output_dir", "results_algaetax")
+        backup_dir = os.path.join(output_dir, "backups")
+        os.makedirs(backup_dir, exist_ok=True)
+
+        backup_path = os.path.join(backup_dir, os.path.basename(skip_file))
+        try:
+            shutil.copy(skip_file, backup_path)
+        except Exception as e:
+            print(f"[WARN] Could not back up skiplist: {e}")
+
+    # Clean lines (no empty lines, no comments)
+    with open(skip_file, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    return [line.strip().lower() for line in lines
+            if line.strip() and not line.strip().startswith("#")]
 
 
 def safe_save_path(output_path):

@@ -18,6 +18,8 @@ general:
 filter:
   blacklist_file: blacklist.txt # Path to text file with terms to ignore in species names
   backup_blacklist: true # Create a backup of the blacklist in {output_dir}/backups (default=true)
+  skiplist_file: skiplist.txt # Terms that cause taxa to be skipped from all DB queries but kept in output
+  backup_skiplist: true # Save a copy of skiplist.txt into the {output_dir}/backups folder
 
 # Databases to use
 database:

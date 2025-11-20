@@ -1,0 +1,6 @@
+# algaetax; file: skiplist.txt
+# Taxa containing any of these terms will NOT be queried against external databases but will still appear in the output.
+uncultured
+unclassified
+environmental sample
+sp.

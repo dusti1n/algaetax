@@ -7,6 +7,21 @@ This document records all notable changes to the **algaetax** project.
 
 ---
 
+### [2025-11-20]
+- **Update algaetax to version v1.7.0**  
+- Update `README.md` with clearer API key information  
+- Add troubleshooting notes for missing or invalid AlgaeBase API keys  
+- Add Skiplist support to skip defined taxonomy terms  
+- Keep Skiplist taxa in results but mark them as skipped  
+- Add “Skipped” status to the output  
+- Save skipped taxa to `skipped_taxa.txt`  
+- Fix ALGB counter to count only queried taxa  
+- Fix NCBI counter to count only queried taxa  
+- Add optional Skiplist debug output  
+- Clean up blacklist to avoid conflicts with the Skiplist
+
+---
+
 ### [2025-10-28]
 - Update `.gitignore` to include additional project files and folders  
 - Update `README.md` with clear setup, configuration, and usage guidance  

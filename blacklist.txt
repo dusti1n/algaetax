@@ -2,8 +2,6 @@
 # Defines terms to exclude from taxon names during filtering (e.g. "sp", "cf", "complex")
 # Blacklist for algaetax: one term per line, case-insensitive, '#' = comment
 # Use lowercase for clarity (e.g. sp, cf, complex)
-sp
-sp.
 spec
 spec.
 cf

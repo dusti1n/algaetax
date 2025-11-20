@@ -12,6 +12,7 @@ from pathlib import Path
 from library.utils import (
     load_config,
     load_blacklist,
+    load_skiplist,
     load_taxa_from_excel,
     is_database_enabled,
     extract_valid_taxon,
@@ -33,6 +34,9 @@ from library.queries import (
 # Load config and blacklist
 config = load_config()
 blacklist = set(load_blacklist(config))
+
+# Load skip terms (taxa containing these terms will not be queried)
+skip_terms = set(load_skiplist(config))
 
 # Set output directory and output file name
 OUTPUT_DIR = Path(config["general"]["output_dir"])
@@ -147,8 +151,29 @@ def startup_info(config):
 # FUNCTION: QUERY_AND_SAVE
 # Run query workflow and write results
 def query_and_save(taxa_list, id_list, id_column_name, output_file, config):
+    # Determine which taxa should be skipped (no DB queries, but kept in output)
+    skip_taxa = set()
+
+    if skip_terms:
+        for taxon in taxa_list:
+            lower_name = str(taxon).lower()
+            if any(term in lower_name for term in skip_terms):
+                skip_taxa.add(taxon)
+
+    # Show all skiplist matches
+    if skip_taxa:
+        skipped_path = os.path.join(OUTPUT_DIR, "skipped_taxa.txt")
+        with open(skipped_path, "w", encoding="utf-8") as f:
+            for t in sorted(skip_taxa):
+                f.write(t + "\n")
+        print(f"\n[algaetax] Loaded {len(skip_terms)} skip terms from skiplist.txt")
+        print(f"[algaetax] Skipped taxa saved to: {skipped_path}")
+
     pr2_data = load_pr2_db() if is_database_enabled("PR2", config) else None
-    taxon_ids = get_taxon_ids_parallel(taxa_list) if is_database_enabled("NCBI", config) else {}
+    
+    # Only query NCBI for taxa that are not on the skip list
+    query_taxa_for_ncbi = [t for t in taxa_list if t not in skip_taxa]
+    taxon_ids = get_taxon_ids_parallel(query_taxa_for_ncbi) if is_database_enabled("NCBI", config) else {}
     ncbi_results = batch_query_ncbi(taxon_ids) if is_database_enabled("NCBI", config) else {}
 
     if is_database_enabled("PR2", config):
@@ -162,6 +187,10 @@ def query_and_save(taxa_list, id_list, id_column_name, output_file, config):
     pr2_counter = 0
     algb_counter = 0
 
+    # Count ALGB taxa that will really be queried (skiplist removed)
+    algb_taxa = [t for t in taxa_list if t not in skip_taxa]
+    algb_total = len(algb_taxa)
+
     # Enumerate() allows us to access the index to match IDs to taxa
     for i, taxon in enumerate(taxa_list):
         taxon_result = {}
@@ -172,6 +201,17 @@ def query_and_save(taxa_list, id_list, id_column_name, output_file, config):
 
         # Add taxon name next (keeps correct order)
         taxon_result["Taxon"] = taxon
+
+        # If this taxon matches skiplist terms do not query any DB
+        if taxon in skip_taxa:
+            if is_database_enabled("NCBI", config):
+                taxon_result["NCBI"] = "Skipped"
+            if is_database_enabled("PR2", config):
+                taxon_result["PR2"] = "Skipped"
+            if is_database_enabled("ALGB", config):
+                taxon_result["ALGB"] = "Skipped"
+            results.append(taxon_result)
+            continue
         
         # Fetch results for each active database
         if is_database_enabled("NCBI", config):
@@ -184,7 +224,7 @@ def query_and_save(taxa_list, id_list, id_column_name, output_file, config):
         
         if is_database_enabled("ALGB", config):
             algb_counter += 1
-            print(f"[{algb_counter}/{len(taxa_list)}] ALGB: {taxon}")
+            print(f"[{algb_counter}/{algb_total}] ALGB: {taxon}")
             algae_result = query_algaebase(taxon)
             taxon_result["ALGB"] = algae_result
 
@@ -247,7 +287,11 @@ def write_results_to_csv(results_list, output_file, config, id_column_name=None)
                 row["NCBI_ID"] = str(ncbi.get("NCBI_ID", ""))
                 row["NCBI_Lineage"] = ncbi.get("Taxonomy", "")
             else:
-                row["NCBI_Status"] = "Not found"
+                # Preserve skiplist status if set, otherwise mark as Not found
+                if isinstance(ncbi, str) and ncbi.startswith("Skipped"):
+                    row["NCBI_Status"] = ncbi
+                else:
+                    row["NCBI_Status"] = "Not found"
 
         # Process PR2 results
         if pr2_enabled:
@@ -272,7 +316,11 @@ def write_results_to_csv(results_list, output_file, config, id_column_name=None)
                 row["PR2_genus"] = entry.get("genus", "")
                 row["PR2_species"] = entry.get("species", "")
             else:
-                row["PR2_Status"] = "Not found"
+                # Preserve skiplist status if set, otherwise mark as Not found
+                if isinstance(pr2, str) and pr2.startswith("Skipped"):
+                    row["PR2_Status"] = pr2
+                else:
+                    row["PR2_Status"] = "Not found"
 
         # Process AlgaeBase result
         if algae_enabled:
@@ -293,7 +341,11 @@ def write_results_to_csv(results_list, output_file, config, id_column_name=None)
                 row["ALGB_scientificName"] = algae.get("ALGB_scientificName", "")
                 row["ALGB_Lineage"] = algae.get("ALGB_Lineage", "")
             else:
-                row["ALGB_Status"] = "Not found"
+                # Preserve skiplist status if set, otherwise mark as Not found
+                if isinstance(algae, str) and algae.startswith("Skipped"):
+                    row["ALGB_Status"] = algae
+                else:
+                    row["ALGB_Status"] = "Not found"
 
         rows.append(row)
 

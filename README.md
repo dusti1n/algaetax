@@ -1,4 +1,4 @@
-# algaetax: taxonomic data retrieval
+# algaetax: taxonomic data query
 
 **algaetax is a bioinformatics tool** for automated querying, extraction, and standardization of taxonomic data from multiple biological databases. It streamlines the retrieval of taxonomy information from sources such as NCBI, PR2, and AlgaeBase, and organizes the results into a unified, structured format suitable for downstream analyses. By ensuring consistency and reproducibility across heterogeneous data sources, algaetax facilitates efficient integration of taxonomy data into bioinformatics pipelines and ecological or molecular studies.
 
@@ -7,10 +7,11 @@
 2. [Using algaetax](#using-algaetax)  
 3. [Install Conda](#install-conda)  
 4. [Install Environment](#install-environment)  
-5. [Configuration Setup](#configuration-setup)  
-6. [Run algaetax](#run-algaetax)  
-7. [References](#references)
-8. [Troubleshooting](#troubleshooting)
+5. [Configuration Setup](#configuration-setup)
+6. [AlgaeBase API](#algaebase-api)
+7. [Run algaetax](#run-algaetax)  
+8. [References](#references)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -116,6 +117,8 @@ Before running **algaetax**, you should review and adjust the main parameters in
 | `export_not_found_taxa_list` | Export list of unfound taxa | `true` |
 | `filter.blacklist_file` | Path to blacklist file | `blacklist.txt` |
 | `filter.backup_blacklist` | Backup blacklist to output | `true` |
+| `filter.skiplist_file` | Path to skiplist file | `skiplist.txt` |
+| `filter.backup_skiplist` | Backup skiplist to output | `true` |
 | `database.NCBI` | Use NCBI database | `true` |
 | `database.PR2` | Use local PR2 database | `true` |
 | `database.ALGB` | Use AlgaeBase (API key required) | `true` |
@@ -126,6 +129,10 @@ Before running **algaetax**, you should review and adjust the main parameters in
 | `db_algaebase.api_url` | AlgaeBase API endpoint | `https://api.algaebase.org/v1.3/species` |
 
 <p><b>Table 1:</b> Main configuration parameters.</p>
+
+## AlgaeBase API
+
+If you want to use the AlgaeBase database, a valid API key is required. Without it, you will not be able to access or use the AlgaeBase DB. If you do not have an API key, set the `ALGB` option to `false` in the configuration file.
 
 ## Run algaetax
 
@@ -216,6 +223,7 @@ Running **algaetax** may occasionally lead to unexpected behavior or failed exec
 - **Unrecognized taxa.** See `taxa_not_found.csv` for unmatched entries.  
 - **Conda issues.** Recreate the environment if dependencies fail.  
 - **Permission denied.** Check read/write access to working directories. 
+- **Invalid AlgaeBase API key.** AlgaeBase queries require a valid key.
 
 ### Installation problems
 

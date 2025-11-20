@@ -83,10 +83,12 @@ def get_taxon_ids_parallel(taxa_list):
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(fetch_taxon_id, taxon, delay): taxon for taxon in taxa_list}
+        total_ncbi = len(taxa_list)
+
         for i, future in enumerate(as_completed(futures), 1):
             taxon, tax_id = future.result()
             taxon_ids[taxon] = tax_id
-            print(f"[{i}/{len(taxa_list)}] NCBI: {taxon}")
+            print(f"[{i}/{total_ncbi}] NCBI: {taxon}")
     return taxon_ids
 
 
