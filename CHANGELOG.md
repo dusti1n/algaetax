@@ -7,6 +7,12 @@ This document records all notable changes to the **algaetax** project.
 
 ---
 
+### [2025-11-26]
+- Update `README.md`
+- Add acknowledgements section to `README.md`
+
+---
+
 ### [2025-11-20]
 - **Update algaetax to version v1.7.0**  
 - Update `README.md` with clearer API key information  

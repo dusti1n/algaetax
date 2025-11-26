@@ -11,7 +11,8 @@
 6. [AlgaeBase API](#algaebase-api)
 7. [Run algaetax](#run-algaetax)  
 8. [References](#references)
-9. [Troubleshooting](#troubleshooting)
+9. [Acknowledgement](#acknowledgement)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -207,6 +208,12 @@ The following references include the main software libraries, environment tools,
 - Federhen, S. (2012). *The NCBI Taxonomy Database.* *Nucleic Acids Research*, 40(D1), D136–D143. [https://www.ncbi.nlm.nih.gov/taxonomy](https://www.ncbi.nlm.nih.gov/taxonomy)  
 - Guillou, L., et al. (2013). *The Protist Ribosomal Reference Database (PR2): A catalog of unicellular eukaryote SSU rRNA sequences with curated taxonomy.* *Nucleic Acids Research*, 41(D1), D597–D604. [https://pr2-database.org](https://pr2-database.org)  
 - Guiry, M.D., & Guiry, G.M. (2024). *AlgaeBase: World-wide electronic publication, National University of Ireland, Galway.* [https://www.algaebase.org](https://www.algaebase.org)
+
+---
+
+## Acknowledgement
+
+The tool **algaetax** was developed in the frame of a cooperation between the [Phycology working group of the University of Duisburg-Essen](https://www.uni-due.de/phycology/) and the [Department U2 Microbial Ecology of the Bundesanstalt für Gewässerkunde](https://www.bafg.de/DE/3_Beraet/4_Exp_oekologie/Planktonzoenosen_U2/planktonzoenosen_node.html).
 
 ---
 
