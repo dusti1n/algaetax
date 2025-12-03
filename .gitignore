@@ -7,3 +7,4 @@ results_algaetax/**
 # Ignore all contents of input_data, but keep the folder itself
 input_data/*
 !input_data/.gitkeep
+!input_data/test_data_algaetax.xlsx

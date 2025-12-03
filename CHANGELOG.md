@@ -7,6 +7,12 @@ This document records all notable changes to the **algaetax** project.
 
 ---
 
+### [2025-12-03]
+- Add `test_data_algaetax.xlsx` test data table for algaetax
+- Update configuration files
+
+---
+
 ### [2025-11-26]
 - Update `README.md`
 - Add acknowledgements section to `README.md`

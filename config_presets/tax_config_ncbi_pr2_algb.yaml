@@ -1,10 +1,10 @@
-# algaetax; configuration file: config.yaml
+# algaetax; configuration file: tax_config_ncbi_pr2_algb.yaml
 
 # General settings
 general:
-  input_data: "input_data/algaetax_test" # Path to input Excel file (e.g. input_data/example_file.xlsx)
+  input_data: "input_data/test_data_algaetax.xlsx" # Path to input Excel file (e.g. input_data/example_file.xlsx)
   output_dir: "results_algaetax" # Folder to save results (default: results_algaetax/)
-  taxa_column_number: 1 # 1-based index: 1 = column A, 27 = column AA
+  taxa_column_number: 3 # 1-based index: 1 = column A, 27 = column AA
   header_row: 1 # Excel header row (1 = first row); set to false if the file has no header
   backup_config: true # # Copy the config.yaml file to the output directory for reference (default=true)
   backup_input: true # Backup of the input Excel file before processing (true/false)
