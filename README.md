@@ -192,7 +192,7 @@ The following references include the main software libraries, environment tools,
 
 #### Environment 
 
-- Van Rossum, G., & Drake, F. L. (2009). *Python 3 Reference Manual.* CreateSpace, Scotts Valley, CA.  
+- Van Rossum, G., & Drake, F. L. (2009). *Python 3 Reference Manual.* CreateSpace, Scotts Valley, CA. https://www.python.org  
 - Anaconda, Inc. (2012). *Conda: Package, dependency and environment management for any language.* [https://docs.conda.io](https://docs.conda.io)
 
 #### Software
