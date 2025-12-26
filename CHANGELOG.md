@@ -3,7 +3,7 @@
 # Changelog
 
 This document records all notable changes to the **algaetax** project.  
-**Note**: Use the **dev** branch for the latest updates and features.
+Use the **dev** branch for the latest updates and features.
 
 ---
 
