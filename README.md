@@ -1,6 +1,10 @@
 # algaetax: taxonomic data query
 
+### About algaetax
+
 **algaetax is a bioinformatics tool** for automated querying, extraction, and standardization of taxonomic data from multiple biological databases. It streamlines the retrieval of taxonomy information from sources such as NCBI, PR2, and AlgaeBase, and organizes the results into a unified, structured format suitable for downstream analyses. By ensuring consistency and reproducibility across heterogeneous data sources, algaetax facilitates efficient integration of taxonomy data into bioinformatics pipelines and ecological or molecular studies.
+
+<img src="documentation/images/algaetax_logo.png" alt="logo" width="350"/>
 
 ## Table of Contents
 1. [Dependencies](#dependencies)  
@@ -9,10 +13,13 @@
 4. [Install Environment](#install-environment)  
 5. [Configuration Setup](#configuration-setup)
 6. [AlgaeBase API](#algaebase-api)
-7. [Run algaetax](#run-algaetax)  
-8. [References](#references)
-9. [Acknowledgement](#acknowledgement)
-10. [Troubleshooting](#troubleshooting)
+7. [Synonym Fallback](#synonym-fallback)
+8. [ID Column Number](#id-column-number)
+9. [Run algaetax](#run-algaetax)  
+10. [Using the GUI](#using-the-gui)
+11. [References](#references)
+12. [Acknowledgement](#acknowledgement)
+13. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -36,11 +43,27 @@ Install, configure, and run algaetax to retrieve and standardize taxonomic data 
 
 ### Example run of algaetax
 
-In this example, algaetax was executed with a small biological test dataset to demonstrate its core functionality. The tool takes a list of organism or taxon names as input, applies a filtering and preprocessing step to clean and standardize the data, and then automatically queries several reference databases available within algaetax — including NCBI, P2, and AlgaeBase. The demonstration illustrates how algaetax retrieves valid and up-to-date taxonomic names as well as hierarchical classifications from these sources. This example run highlights the typical workflow of algaetax, from data preparation to automated taxonomic verification, using a compact test dataset for clarity.
+In this example, algaetax was executed with a small biological test dataset to demonstrate its core functionality. The tool takes a list of organism or taxon names as input, applies a filtering and preprocessing step to clean and standardize the data, and then automatically queries several reference databases available within algaetax — including NCBI, PR2, and AlgaeBase. The demonstration illustrates how algaetax retrieves valid and up-to-date taxonomic names as well as hierarchical classifications from these sources. This example run highlights the typical workflow of algaetax, from data preparation to automated taxonomic verification, using a compact test dataset for clarity.
 
 <p><img src="documentation/images/algaetax_run.gif" alt="algaetax demo" width="700"></p>
-
 <p><b>Fig. 1:</b> Example run of algaetax with a small biological test dataset.</p>
+
+### Graphical User Interface (GUI)
+
+The graphical user interface (GUI) of algaetax provides an intuitive way to configure and execute taxonomic analyses, manage input and output files, and adjust workflow settings without extensive command-line interaction. It simplifies the setup process and offers an accessible workflow for both beginners and advanced users. For a detailed description of the available GUI features, workflow options, and configuration settings, please see the <a href="#using-the-gui">Using the GUI</a> section below.
+
+<p><img src="documentation/images/gui_algaetax.png" alt="algaetax GUI" width="700"></p>
+<p><b>Fig. 2:</b> Graphical user interface (GUI) of algaetax.</p>
+
+### Used databases
+
+In this study, *algaetax* integrates multiple established taxonomic reference databases to ensure comprehensive and reliable annotation of biological data. Specifically, the tool queries NCBI (National Center for Biotechnology Information), AlgaeBase, and PR2 (Protist Ribosomal Reference database) to retrieve validated taxonomic names and hierarchical classifications.
+
+Each database contributes complementary strengths to the workflow, with NCBI providing a broad taxonomy backbone across all domains of life, AlgaeBase offering curated expertise for algal taxa, and PR2 delivering high-resolution reference data for protists. By combining these resources, *algaetax* improves taxonomic coverage and accuracy through cross-validation, ensuring consistent, up-to-date classifications suitable for downstream bioinformatics analyses.
+
+<p><img src="documentation/images/algaetax_used_dbs.png" alt="algaetax databases" width="350"></p>
+
+<p><b>Fig. 3:</b> Databases used by algaetax for taxonomic classification.</p>
 
 ### Install Conda
 
@@ -107,24 +130,28 @@ Before running **algaetax**, you should review and adjust the main parameters in
 
 #### Configuration parameters  
 
+The following table summarizes the main configuration parameters used by algaetax.
+
 | Parameter | Description | Example |
 |------------|--------------|----------|
-| `input_data` | Path to input Excel file | `input_data/dustin/input_list_trim_2.xlsx` |
+| `input_data` | Path to input Excel file | `input_data/test_data_algaetax.xlsx` |
 | `output_dir` | Output folder for results | `results_algaetax` |
-| `taxa_column_number` | Column number for taxa names (1-based) | `4` |
+| `taxa_column_number` | Column number for taxa names (1-based) | `3` |
 | `header_row` | Header row number (`false` if none) | `1` |
 | `backup_config` | Save config copy to output | `true` |
 | `backup_input` | Backup input file before run | `true` |
-| `export_not_found_taxa_list` | Export list of unfound taxa | `true` |
+| `export_not_found_taxa_list` | Export list of unmatched taxa | `true` |
+| `synonym_fallback` | Enable synonym lookup via AlgaeBase | `true` |
+| `id_column_number` | Column containing sample or sequence IDs | `false` |
 | `filter.blacklist_file` | Path to blacklist file | `blacklist.txt` |
 | `filter.backup_blacklist` | Backup blacklist to output | `true` |
 | `filter.skiplist_file` | Path to skiplist file | `skiplist.txt` |
 | `filter.backup_skiplist` | Backup skiplist to output | `true` |
 | `database.NCBI` | Use NCBI database | `true` |
 | `database.PR2` | Use local PR2 database | `true` |
-| `database.ALGB` | Use AlgaeBase (API key required) | `true` |
-| `database_path.db_pr2` | Path to local PR2 file | `database/pr2_version_5.1.0_taxonomy.xlsx` |
-| `db_ncbi.api_key` | NCBI API key (optional) | `abc123xyz` |
+| `database.ALGB` | Use AlgaeBase database | `true` |
+| `database_path.db_pr2` | Path to local PR2 file | `database/pr2_version_5.1.1_taxonomy.xlsx` |
+| `db_ncbi.api_key` | Optional NCBI API key | `xyz987abc` |
 | `db_ncbi.ncbi_email` | Email for NCBI queries | `anonymous@ncbi.com` |
 | `db_algaebase.api_key` | AlgaeBase API key | `xyz987abc` |
 | `db_algaebase.api_url` | AlgaeBase API endpoint | `https://api.algaebase.org/v1.3/species` |
@@ -134,6 +161,18 @@ Before running **algaetax**, you should review and adjust the main parameters in
 ## AlgaeBase API
 
 If you want to use the AlgaeBase database, a valid API key is required. Without it, you will not be able to access or use the AlgaeBase DB. If you do not have an API key, set the `ALGB` option to `false` in the configuration file.
+
+## Synonym Fallback
+
+The synonym fallback option enables additional taxonomic lookup support via AlgaeBase when no valid match is found in NCBI or PR2. If enabled, algaetax automatically checks whether a queried taxon exists as a synonym in AlgaeBase and attempts to retrieve the currently accepted taxonomic name and classification.
+
+This feature is especially useful for outdated, deprecated, misspelled, or alternative species names that may no longer exist under their original taxonomy in NCBI or PR2. By resolving known synonyms through AlgaeBase, algaetax can improve taxonomic recovery and increase the number of successfully classified taxa.
+
+If no valid synonym is found, the original taxon entry remains unchanged and is reported as not found in the output files.
+
+## ID Column Number
+
+Optional: defines which column in the input file contains unique sample or sequence IDs. These IDs will be added to the output for easier tracking of each taxon entry.
 
 ## Run algaetax
 
@@ -168,17 +207,18 @@ Example for a custom configuration file:
 python3 algaetax.py --configfile config_presets/tax_config_ncbi_pr2_algb.yaml
 ```
 
-### Outputfiles 
+### Output Files
 
 After the analysis is completed, **algaetax** automatically saves all generated files, logs, and backups in the directory defined under `output_dir` in your `config.yaml`. Each run creates a structured set of output files that document both the retrieved taxonomy data and the overall workflow execution.
 
 | **Output type** | **Description** |
 |------------------|-----------------|
-| Taxonomy tables | CSV files with standardized taxonomic data. |
-| Reports | Summaries of matched taxa and query stats. |
-| Unmatched taxa (`taxa_not_found.csv`) | List of taxa without database matches. |
-| Backups | Copies of config, input data, and blacklist. |
-| Log files | Records of all steps, timestamps, and warnings. |
+| Taxonomy tables | CSV files with standardized taxonomic classifications. |
+| Reports | Summaries of matched taxa and workflow statistics. |
+| Unmatched taxa | List of taxa without valid database matches. |
+| Configuration files | YAML configuration files used for workflow execution. |
+| Backups | Copies of config, input, blacklist, and skiplist files. |
+| Log files | Records of workflow steps, warnings, and query details. |
 
 <p><b>Table 2:</b> Overview of main output files generated by algaetax.</p>
 
@@ -186,9 +226,28 @@ These outputs ensure that every analysis performed with **algaetax** is transpar
 
 ---
 
+## Using the GUI
+
+The graphical user interface (GUI) of algaetax provides an intuitive workflow for configuring and running taxonomic analyses without extensive command-line interaction. It allows users to manage input files, configure workflow settings, define output directories, and start analyses directly from a graphical environment.
+
+Before starting the GUI, ensure that algaetax and all required dependencies are correctly installed and configured. Please see the sections <a href="#install-environment">Install Environment</a> and <a href="#configuration-setup">Configuration Setup</a> for detailed setup instructions and required configuration parameters.
+
+The GUI supports loading and saving YAML configuration files, selecting local PR2 database files, configuring API credentials, and enabling or disabling optional workflow components. Integrated validation checks and workflow status indicators help simplify configuration management and reduce common setup errors.
+
+Start the GUI from the algaetax root directory using:
+
+```bash
+# Start the algaetax GUI
+python3 gui_algaetax.py
+```
+
+The GUI is especially useful for users who prefer a visual workflow or want to simplify repeated execution of algaetax analyses with different datasets or parameter settings.
+
+---
+
 ## References  
 
-The following references include the main software libraries, environment tools, and taxonomic databases used by algaetax. They represent the core scientific and technical foundations of the workflow, supporting data processing, taxonomy retrieval, and reproducibility across analyses.
+The following references include the main software libraries, environment tools, graphical user interface frameworks, and taxonomic databases used by algaetax. They represent the core scientific and technical foundations of the workflow, supporting data processing, taxonomy retrieval, GUI functionality, and reproducibility across analyses.
 
 #### Environment 
 
@@ -198,10 +257,11 @@ The following references include the main software libraries, environment tools,
 #### Software
 
 - Cock, P.J.A., et al. (2009). *Biopython: Freely available Python tools for computational molecular biology and bioinformatics.* *Bioinformatics*, 25(11), 1422–1423. [https://biopython.org](https://biopython.org)  
-- McKinney, W. (2010). *Data Structures for Statistical Computing in Python.* *Proc. 9th Python in Science Conf.*, 51–56. [https://pandas.pydata.org](https://pandas.pydata.org)  
+- McKinney, W. (2010). *Data Structures for Statistical Computing in Python.* *Proceedings of the 9th Python in Science Conference*, 51–56. [https://pandas.pydata.org](https://pandas.pydata.org)  
 - OpenPyXL Developers. (2023). *OpenPyXL: A Python library to read/write Excel files.* [https://openpyxl.readthedocs.io](https://openpyxl.readthedocs.io)  
 - Simonov, K., et al. (2022). *PyYAML: YAML parser and emitter for Python.* [https://pyyaml.org](https://pyyaml.org)  
-- Reitz, K., & Contributors. (2011). *Requests: HTTP for Humans.* [https://requests.readthedocs.io](https://requests.readthedocs.io)
+- Reitz, K., & Contributors. (2011). *Requests: HTTP for Humans.* [https://requests.readthedocs.io](https://requests.readthedocs.io)  
+- Riverbank Computing Limited. (2024). *PyQt6: Python bindings for the Qt application framework.* [https://www.riverbankcomputing.com/software/pyqt/](https://www.riverbankcomputing.com/software/pyqt/)
 
 #### Databases
 
@@ -219,28 +279,28 @@ The tool **algaetax** was developed in the frame of a cooperation between the [P
 
 ## Troubleshooting
 
-Running **algaetax** may occasionally lead to unexpected behavior or failed executions, especially during setup or database queries. Below is a list of common issues, their likely causes, and hints for troubleshooting. If issues persist, test **algaetax** with a small dataset to verify dependencies and database access before running large analyses.
+Running **algaetax** may occasionally lead to unexpected behavior or failed executions, especially during environment setup, configuration, or database queries. Below is a list of common issues, possible causes, and troubleshooting suggestions for resolving workflow and installation problems.
 
 ### Common causes of workflow errors
 
 - **Missing config file.** Ensure `config.yaml` exists and is valid.  
-- **Wrong file paths.** Input and output paths must match the configuration.  
-- **Empty or invalid input.** Check that the input list contains valid taxa.  
+- **Wrong file paths.** Verify all input and output paths.  
+- **Empty or invalid input.** Check that the taxa list is valid.  
 - **Database errors.** Network issues may block access to NCBI, PR2, or AlgaeBase.  
-- **Unrecognized taxa.** See `taxa_not_found.csv` for unmatched entries.  
-- **Conda issues.** Recreate the environment if dependencies fail.  
-- **Permission denied.** Check read/write access to working directories. 
-- **Invalid AlgaeBase API key.** AlgaeBase queries require a valid key.
+- **Unrecognized taxa.** See `taxa_not_found.csv` for unmatched taxa.  
+- **Conda issues.** Recreate the Conda environment if needed.  
+- **Permission denied.** Verify read and write permissions.  
+- **Invalid AlgaeBase API key.** Use a valid AlgaeBase API key.
 
 ### Installation problems
 
-- **Conda not found.** Verify Conda or Miniconda is installed and in your `PATH`.  
-- **Env creation failed.** Remove old environments and recreate from YAML.  
-- **Dependency conflicts.** Avoid mixing Conda with `pip` or `mamba` installs. 
+- **Conda not found.** Ensure Conda is installed and in your `PATH`.  
+- **Environment creation failed.** Recreate the environment from YAML.  
+- **Dependency conflicts.** Avoid mixing Conda with `pip` installs.
 
 ### Runtime or output problems
 
-- **Empty results.** Input taxa may be filtered or unmatched — check logs.  
-- **Run interrupted.** Restart if the workflow stopped or network dropped.  
-- **Wrong database setup.** Confirm databases in `config.yaml` are correct.  
-- **Errors in logs.** Inspect `algaetax.log` for details on failed queries.
+- **Empty results.** Check logs and database settings.  
+- **Interrupted workflow.** Restart the analysis and try again.  
+- **Incorrect database configuration.** Verify settings in `config.yaml`.  
+- **Errors in logs.** Inspect `algaetax.log` for details.

@@ -9,6 +9,7 @@ general:
   backup_config: true # # Copy the config.yaml file to the output directory for reference (default=true)
   backup_input: true # Backup of the input Excel file before processing (true/false)
   export_not_found_taxa_list: true # Export list of taxa where ALL used databases returned "Not found" (file: taxa_not_found.csv)
+  synonym_fallback: true # Enable synonym fallback via AlgaeBase for NCBI/PR2 if not found
 
   # Optional: defines which column in the input file contains unique sample or sequence IDs.
   # These IDs will be added to the output for easier tracking of each taxon entry.
@@ -29,7 +30,7 @@ database:
 
 # Paths to local database files
 database_path:
-  db_pr2: "database/pr2_version_5.1.0_taxonomy.xlsx" # Path to PR2 file (e.g. database/pr2_v5.xlsx)
+  db_pr2: "database/pr2_version_5.1.1_taxonomy.xlsx" # Path to PR2 file (e.g. database/pr2_v5.xlsx)
 
 # NCBI API settings
 db_ncbi:

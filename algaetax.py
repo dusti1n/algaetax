@@ -27,6 +27,7 @@ from library.queries import (
     query_pr2,
     query_algaebase,
     get_taxon_ids_parallel,
+    get_algaebase_candidate_names,
 )
 
 
@@ -79,7 +80,7 @@ else:
 # Print metadata and active database info
 def startup_info(config):
     # Start information
-    print("\nalgaetax v1.6.0 MIT License")
+    print("\nalgaetax v2.0.0 MIT License")
     print("University of Duisburg-Essen (UDE)")
     print("Dustin Finke, Prof. Dr. Bank Beszteri\n")
     
@@ -184,6 +185,7 @@ def query_and_save(taxa_list, id_list, id_column_name, output_file, config):
         print("[ALGB] Start API query...\n")
 
     results = []
+    fallback_log = []
     pr2_counter = 0
     algb_counter = 0
 
@@ -215,11 +217,76 @@ def query_and_save(taxa_list, id_list, id_column_name, output_file, config):
         
         # Fetch results for each active database
         if is_database_enabled("NCBI", config):
-            taxon_result["NCBI"] = ncbi_results.get(taxon, "Not found")
+            ncbi_result = ncbi_results.get(taxon)
+            taxon_result["NCBI_QueryName"] = taxon
+
+            use_fallback = config["general"].get("synonym_fallback", False)
+
+            if not ncbi_result and use_fallback and is_database_enabled("ALGB", config):
+                candidates = get_algaebase_candidate_names(taxon, config)
+
+                for candidate in candidates[1:]:
+                    syn_id_map = get_taxon_ids_parallel([candidate], silent=True)
+                    syn_results = batch_query_ncbi(syn_id_map)
+                    syn_result = syn_results.get(candidate)
+
+                    if syn_result:
+                        ncbi_result = syn_result
+                        taxon_result["NCBI_QueryName"] = candidate
+
+                        fallback_log.append({
+                            "Taxon": taxon,
+                            "Database": "NCBI",
+                            "Original_Query": taxon,
+                            "Fallback_Query": candidate,
+                            "Status": "Success"
+                        })
+                        break
+                    else:
+                        fallback_log.append({
+                            "Taxon": taxon,
+                            "Database": "NCBI",
+                            "Original_Query": taxon,
+                            "Fallback_Query": candidate,
+                            "Status": "Failed"
+                        })
+
+            taxon_result["NCBI"] = ncbi_result if ncbi_result else "Not found"
         
         if is_database_enabled("PR2", config):
             pr2_counter += 1
             pr2_result = query_pr2(taxon, pr2_data)
+            taxon_result["PR2_QueryName"] = taxon
+
+            use_fallback = config["general"].get("synonym_fallback", False)
+
+            if pr2_result == "Not found" and use_fallback and is_database_enabled("ALGB", config):
+                candidates = get_algaebase_candidate_names(taxon, config)
+
+                for candidate in candidates[1:]:
+                    alt_result = query_pr2(candidate, pr2_data)
+
+                    if isinstance(alt_result, list) and alt_result:
+                        pr2_result = alt_result
+                        taxon_result["PR2_QueryName"] = candidate
+
+                        fallback_log.append({
+                            "Taxon": taxon,
+                            "Database": "PR2",
+                            "Original_Query": taxon,
+                            "Fallback_Query": candidate,
+                            "Status": "Success"
+                        })
+                        break
+                    else:
+                        fallback_log.append({
+                            "Taxon": taxon,
+                            "Database": "PR2",
+                            "Original_Query": taxon,
+                            "Fallback_Query": candidate,
+                            "Status": "Failed"
+                        })
+
             taxon_result["PR2"] = pr2_result
         
         if is_database_enabled("ALGB", config):
@@ -240,12 +307,28 @@ def query_and_save(taxa_list, id_list, id_column_name, output_file, config):
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     write_results_to_csv(results, output_file, config, id_column_name)
 
+    fallback_log_path = OUTPUT_DIR / "fallback_log.csv"
+
+    if fallback_log:
+        fallback_df = pd.DataFrame(fallback_log)
+        fallback_df.to_csv(fallback_log_path, index=False, encoding="utf-8", sep=";")
+    else:
+        pd.DataFrame(columns=[
+            "Taxon",
+            "Database",
+            "Original_Query",
+            "Fallback_Query",
+            "Status"
+        ]).to_csv(fallback_log_path, index=False, encoding="utf-8", sep=";")
+
+    print(f"[algaetax] Fallback log saved to: \n{fallback_log_path}")
+
     # Runtime summary
     elapsed = time.time() - start_time
     minutes = int(elapsed // 60)
     seconds = int(elapsed % 60)
     
-    print(f"{'-' * 20}")
+    print(f"\n\n\n{'-' * 20}")
     print(f"[algaetax] All QUERIES completed.")
     print(f"Runtime: {minutes} min {seconds} sec; {elapsed:.2f} seconds")
     print(f"\n[algaetax] Results saved to: \n{output_file}\n\n")
@@ -282,9 +365,18 @@ def write_results_to_csv(results_list, output_file, config, id_column_name=None)
         # Process NCBI results
         if ncbi_enabled:
             ncbi = result.get("NCBI")
+            row["NCBI_QueryName"] = result.get("NCBI_QueryName", result.get("Taxon", ""))
             if isinstance(ncbi, dict):
                 row["NCBI_Status"] = "Found"
                 row["NCBI_ID"] = str(ncbi.get("NCBI_ID", ""))
+                row["NCBI_QueryName"] = result.get("NCBI_QueryName", result.get("Taxon", ""))
+                row["NCBI_domain"] = ncbi.get("NCBI_domain", "")
+                row["NCBI_kingdom"] = ncbi.get("NCBI_kingdom", "")
+                row["NCBI_phylum"] = ncbi.get("NCBI_phylum", "")
+                row["NCBI_class"] = ncbi.get("NCBI_class", "")
+                row["NCBI_order"] = ncbi.get("NCBI_order", "")
+                row["NCBI_family"] = ncbi.get("NCBI_family", "")
+                row["NCBI_genus"] = ncbi.get("NCBI_genus", "")
                 row["NCBI_Lineage"] = ncbi.get("Taxonomy", "")
             else:
                 # Preserve skiplist status if set, otherwise mark as Not found
@@ -296,8 +388,10 @@ def write_results_to_csv(results_list, output_file, config, id_column_name=None)
         # Process PR2 results
         if pr2_enabled:
             pr2 = result.get("PR2")
+            row["PR2_QueryName"] = result.get("PR2_QueryName", result.get("Taxon", ""))
             if isinstance(pr2, list) and pr2:
                 row["PR2_Status"] = "Found"
+                row["PR2_QueryName"] = result.get("PR2_QueryName", result.get("Taxon", ""))
                 # Build lineage string from PR2 fields
                 entry = pr2[0]
                 lineage_parts = []
@@ -360,14 +454,54 @@ def write_results_to_csv(results_list, output_file, config, id_column_name=None)
     columns.append("Taxon")
     
     if ncbi_enabled:
-        columns += ["NCBI_Status", "NCBI_ID", "NCBI_Lineage"]
+        columns += [
+            "NCBI_Status",
+            "NCBI_ID",
+            "NCBI_QueryName",
+            "NCBI_domain",
+            "NCBI_kingdom",
+            "NCBI_phylum",
+            "NCBI_class",
+            "NCBI_order",
+            "NCBI_family",
+            "NCBI_genus",
+            "NCBI_Lineage",
+        ]
+
     if pr2_enabled:
-        columns += ["PR2_Status", "PR2_domain", "PR2_supergroup", "PR2_division",
-                    "PR2_subdivision", "PR2_class", "PR2_order", "PR2_family", "PR2_genus", "PR2_species", "PR2_Lineage"]
+        columns += [
+            "PR2_Status",
+            "PR2_QueryName",
+            "PR2_domain",
+            "PR2_supergroup",
+            "PR2_division",
+            "PR2_subdivision",
+            "PR2_class",
+            "PR2_order",
+            "PR2_family",
+            "PR2_genus",
+            "PR2_species",
+            "PR2_Lineage",
+        ]
+
     if algae_enabled:
-        columns += ["ALGB_Status", "ALGB_Name_status", "ALGB_CurrentName", "ALGB_ID",
-                    "ALGB_Empire", "ALGB_Kingdom", "ALGB_Phylum", "ALGB_Subphylum", "ALGB_Class",
-                    "ALGB_Order", "ALGB_Family", "ALGB_Genus", "ALGB_scientificName", "ALGB_Lineage"]
+        columns += [
+            "ALGB_Status",
+            "ALGB_Name_status",
+            "ALGB_CurrentName",
+            "ALGB_ID",
+            "ALGB_Empire",
+            "ALGB_Kingdom",
+            "ALGB_Phylum",
+            "ALGB_Subphylum",
+            "ALGB_Class",
+            "ALGB_Order",
+            "ALGB_Family",
+            "ALGB_Genus",
+            "ALGB_scientificName",
+            "ALGB_Lineage",
+        ]
+
     df = df[columns]
 
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
@@ -388,7 +522,7 @@ def write_results_to_csv(results_list, output_file, config, id_column_name=None)
                 all_not_found_df = all_not_found_df[["Taxon"] + enabled_cols]
                 all_not_found_df.to_csv(not_found_path, index=False, encoding="utf-8", sep=";")
                 print(f"\n\n\n{'-' * 20}")
-                print(f"[algaetax] 'Not found' taxa saved: \n{not_found_path}")
+                print(f"[algaetax] 'Not found' taxa saved: \n{not_found_path}\n")
             else:
                 empty_df = pd.DataFrame(columns=["Taxon"] + enabled_cols)
                 empty_df.to_csv(not_found_path, index=False, encoding="utf-8", sep=";")

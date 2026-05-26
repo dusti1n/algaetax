@@ -1,10 +1,35 @@
-# macOS metadata
+# macOS system files
 .DS_Store
+.AppleDouble
+.LSOverride
+
 # Python cache
-library/__pycache__/
-# Analysis results
-results_algaetax/**
-# Ignore all contents of input_data, but keep the folder itself
+__pycache__/
+*.py[cod]
+
+# Analysis results (all result folders)
+results_*/
+
+# Input data (ignore all, keep selected files)
 input_data/*
 !input_data/.gitkeep
 !input_data/test_data_algaetax.xlsx
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# Excel temporary files
+~$*.xlsx
+
+# Virtual environments (optional, if created locally)
+env/
+.venv/
+venv/
+
+# IDE / Editor files (optional)
+.vscode/
+.idea/
+*.swp
+*.swo

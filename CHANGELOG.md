@@ -1,9 +1,30 @@
-#### algaetax; bioinformatics
+[algaetax – Bioinformatics Tool](https://github.com/d11ustn/algaetax)
 
 # Changelog
+This document summarizes all notable changes to **algaetax**, including updates, fixes, and improvements across releases. It provides a clear overview of the project's development and recent enhancements.
 
-This document records all notable changes to the **algaetax** project.  
-Use the **dev** branch for the latest updates and features.
+---
+
+### [2026-05-26]
+- **Update algaetax to version v2.0.0**  
+- Update `.gitignore`, `CHANGELOG.md`, and `README.md`  
+- Update Conda environment `algaetax.yaml`  
+- Update PR2 taxonomy database to v5.1.1  
+- Add algaetax logo and database usage image to `README.md`  
+- Add NCBI taxonomy extraction using `LineageEx`  
+- Map NCBI `superkingdom` to `NCBI_domain` for a unified taxonomy hierarchy  
+- Extend NCBI output with additional taxonomy rank columns  
+- Improve taxonomy completeness using current NCBI records  
+- Add graphical user interface (GUI) for interactive configuration setup  
+- Add GUI image and documentation to `README.md`  
+- Enable running algaetax directly from the GUI  
+- Replace manual YAML editing with guided GUI configuration  
+- Add synonym-based fallback using AlgaeBase  
+- Add `synonym_fallback` parameter to `config.yaml`  
+- Query accepted taxonomic names before NCBI and PR2 requests  
+- Retry failed taxonomy queries using alternative names  
+- Store successful fallback query terms in the output  
+- Add `fallback_log.csv` for fallback query tracking and traceability  
 
 ---
 

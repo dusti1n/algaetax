@@ -73,13 +73,14 @@ def fetch_taxon_id(taxon, delay):
 
 
 # Run fetch_taxon_id() for multiple taxa in parallel.
-def get_taxon_ids_parallel(taxa_list):
+def get_taxon_ids_parallel(taxa_list, silent=False):
     taxon_ids = {}
     delay = 0.5 if api_key else 0.4
     max_workers = 3 if api_key else 2
 
-    print(f"\n\n{'-' * 20}")
-    print(f"[NCBI] Start fetching taxon IDs \nDelay: {delay}s; Threads: {max_workers}\n")
+    if not silent:
+        print(f"\n\n{'-' * 20}")
+        print(f"[NCBI] Start fetching taxon IDs \nDelay: {delay}s; Threads: {max_workers}\n")
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(fetch_taxon_id, taxon, delay): taxon for taxon in taxa_list}
@@ -88,8 +89,50 @@ def get_taxon_ids_parallel(taxa_list):
         for i, future in enumerate(as_completed(futures), 1):
             taxon, tax_id = future.result()
             taxon_ids[taxon] = tax_id
-            print(f"[{i}/{total_ncbi}] NCBI: {taxon}")
+            if not silent:
+                print(f"[{i}/{total_ncbi}] NCBI: {taxon}")
     return taxon_ids
+
+
+# Extract selected taxonomic ranks (domain–genus) from NCBI LineageEx and current record.
+def extract_ncbi_rank_fields(record):
+    rank_map = {
+        "domain": "NCBI_domain",
+        "superkingdom": "NCBI_domain", # backward compatibility
+        "kingdom": "NCBI_kingdom",
+        "phylum": "NCBI_phylum",
+        "class": "NCBI_class",
+        "order": "NCBI_order",
+        "family": "NCBI_family",
+        "genus": "NCBI_genus",
+    }
+
+    extracted = {
+        "NCBI_domain": "",
+        "NCBI_kingdom": "",
+        "NCBI_phylum": "",
+        "NCBI_class": "",
+        "NCBI_order": "",
+        "NCBI_family": "",
+        "NCBI_genus": "",
+    }
+
+    # Extract ranks from LineageEx (ancestors)
+    for entry in record.get("LineageEx", []):
+        rank = str(entry.get("Rank", "")).strip().lower()
+        name = str(entry.get("ScientificName", "")).strip()
+
+        if rank in rank_map and name and not extracted[rank_map[rank]]:
+            extracted[rank_map[rank]] = name
+
+    # Also check the current record itself
+    current_rank = str(record.get("Rank", "")).strip().lower()
+    current_name = str(record.get("ScientificName", "")).strip()
+
+    if current_rank in rank_map and current_name:
+        extracted[rank_map[current_rank]] = current_name
+
+    return extracted
 
 
 # Fetch full taxonomy from NCBI using taxon IDs in batches.
@@ -117,11 +160,14 @@ def batch_query_ncbi(taxon_ids, batch_size=10):
             for record in records:
                 tax_id = record["TaxId"]
                 lineage = record.get("Lineage", "Not found")
+                rank_fields = extract_ncbi_rank_fields(record)
+
                 matched_taxon = next((name for name, tid in taxon_ids.items() if tid == tax_id), None)
                 if matched_taxon:
                     results[matched_taxon] = {
                         "NCBI_ID": tax_id,
-                        "Taxonomy": lineage
+                        "Taxonomy": lineage,
+                        **rank_fields
                     }
 
         except Exception as e:
@@ -162,7 +208,12 @@ def query_algaebase(taxon):
                 if result["ALGB_Name_status"] == "currently accepted taxonomically":
                     result["ALGB_CurrentName"] = parts[0] + " " + parts[1]
                 else:
-                    result["ALGB_CurrentName"] = extract_valid_taxon(entrySP.get("dwc:acceptedNameUsage"))
+                    accepted_name = entrySP.get("dwc:acceptedNameUsage")
+                    if accepted_name:
+                        parts = str(accepted_name).strip().split()
+                        result["ALGB_CurrentName"] = " ".join(parts[:2])
+                    else:
+                        result["ALGB_CurrentName"] = ""
         elif len(parts) == 1:
             pass  # valid genus-only query; handled below
         else:
@@ -200,3 +251,19 @@ def query_algaebase(taxon):
     except Exception as e:
         return result
     return result
+
+
+# Get original taxon and optional accepted name from AlgaeBase as fallback candidates
+def get_algaebase_candidate_names(taxon, config):
+    candidates = [taxon]
+
+    if not config["database"].get("ALGB", False):
+        return candidates
+
+    result = query_algaebase(taxon)
+    accepted = result.get("ALGB_CurrentName", "")
+
+    if accepted and accepted not in candidates:
+        candidates.append(accepted)
+
+    return candidates
