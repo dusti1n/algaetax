@@ -4,7 +4,7 @@
 
 **algaetax is a bioinformatics tool** for automated querying, extraction, and standardization of taxonomic data from multiple biological databases. It streamlines the retrieval of taxonomy information from sources such as NCBI, PR2, and AlgaeBase, and organizes the results into a unified, structured format suitable for downstream analyses. By ensuring consistency and reproducibility across heterogeneous data sources, algaetax facilitates efficient integration of taxonomy data into bioinformatics pipelines and ecological or molecular studies.
 
-<img src="documentation/images/algaetax_logo.png" alt="logo" width="350"/>
+<img src="documentation/images/algaetax_logo_2.png" alt="logo" width="450"/>
 
 ## Table of Contents
 1. [Dependencies](#dependencies)  
@@ -61,7 +61,7 @@ In this study, *algaetax* integrates multiple established taxonomic reference da
 
 Each database contributes complementary strengths to the workflow, with NCBI providing a broad taxonomy backbone across all domains of life, AlgaeBase offering curated expertise for algal taxa, and PR2 delivering high-resolution reference data for protists. By combining these resources, *algaetax* improves taxonomic coverage and accuracy through cross-validation, ensuring consistent, up-to-date classifications suitable for downstream bioinformatics analyses.
 
-<p><img src="documentation/images/algaetax_used_dbs.png" alt="algaetax databases" width="350"></p>
+<p><img src="documentation/images/algaetax_used_dbs.png" alt="algaetax databases" width="450"></p>
 
 <p><b>Fig. 3:</b> Databases used by algaetax for taxonomic classification.</p>
 
